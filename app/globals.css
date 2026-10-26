@@ -1,26 +1,706 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-dark: #0c0d11;
+  --bg-stage: #101217;
+  --road-dark: #16171d;
+  --road-border: #23252f;
+  --green-glow: #45db7d;
+  --green-dim: #25a053;
+  --text-primary: #ffffff;
+  --text-muted: #8b90a0;
+  --text-ghost: rgba(255, 255, 255, 0.18);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html, body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* ========================================================
+   HERO CONTAINER & PINNED STAGE
+   ======================================================== */
+.hero-container {
+  position: relative;
+  width: 100%;
+  height: 280vh; /* Smooth scrub travel distance */
+  background: var(--bg-dark);
+}
+
+.stage-wrapper {
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(ellipse at 50% 50%, #171922 0%, #0c0d11 100%);
+  overflow: hidden;
+}
+
+/* Ambient engineering grid backdrop */
+.stage-backdrop {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 70px 70px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ========================================================
+   TOP NAVIGATION
+   ======================================================== */
+.nav-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.8rem 3.5rem;
+  pointer-events: auto;
+}
+
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.brand-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--green-glow);
+  box-shadow: 0 0 10px var(--green-glow);
+}
+
+.brand-pill {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ========================================================
+   HUD PROGRESS INDICATOR (TOP-RIGHT)
+   ======================================================== */
+.hud-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 140px;
+}
+
+.hud-metric {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hud-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-size: 0.95rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  color: var(--green-glow);
+  letter-spacing: 0.05em;
+}
+
+.hud-bar-container {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hud-bar-fill {
+  height: 100%;
+  background: var(--green-glow);
+  box-shadow: 0 0 8px var(--green-glow);
+  width: 0%;
+  transition: width 0.04s linear;
+}
+
+/* ========================================================
+   ROAD & TRAVEL TRACK
+   ======================================================== */
+.road-track {
+  position: relative;
+  width: 100vw;
+  height: 200px;
+  background-color: var(--road-dark);
+  border-top: 1px solid var(--road-border);
+  border-bottom: 1px solid var(--road-border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+/* Road asphalt grain line markers */
+.road-lane-markings {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.16) 0px,
+    rgba(255, 255, 255, 0.16) 45px,
+    transparent 45px,
+    transparent 90px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Vivid Green Trail */
+.green-trail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(37, 160, 83, 0.9) 0%,
+    rgba(69, 219, 125, 0.98) 95%,
+    #5ff597 100%
+  );
+  box-shadow: 0 0 35px rgba(69, 219, 125, 0.4);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.green-trail::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.45) 0px,
+    rgba(255, 255, 255, 0.45) 45px,
+    transparent 45px,
+    transparent 90px
+  );
+}
+
+/* ========================================================
+   HEADLINE: W E L C O M E   I T Z   F I Z Z
+   ======================================================== */
+.headline-container {
+  position: absolute;
+  left: 230px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  z-index: 6;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+.headline-letter {
+  display: inline-block;
+  font-size: clamp(2.8rem, 6.5vw, 6.8rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--text-ghost);
+  transition: color 0.12s ease, opacity 0.12s ease;
+  will-change: color, opacity;
+}
+
+/* Highlighted state when car and green trail pass */
+.headline-letter.illuminated {
+  color: #07090b !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.headline-space {
+  display: inline-block;
+  width: clamp(0.8rem, 2vw, 2.2rem);
+}
+
+/* ========================================================
+   CAR VISUAL WRAPPER
+   ======================================================== */
+.car-wrapper {
+  position: absolute;
+  top: 0;
+  left: -160px;
+  width: 360px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* ========================================================
+   STATISTICS CARDS
+   ======================================================== */
+.stats-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.stat-card {
+  position: absolute;
+  border-radius: 14px;
+  padding: 1.5rem 1.9rem;
+  min-width: 220px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(20px);
+  will-change: opacity, transform;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.stat-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.1rem;
+}
+
+.stat-sublabel {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+.stat-indicator-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.stat-box1 {
+  top: 8%;
+  right: 32%;
+}
+
+.stat-box2 {
+  bottom: 8%;
+  right: 36%;
+}
+
+.stat-box3 {
+  top: 8%;
+  right: 8%;
+}
+
+.stat-box4 {
+  bottom: 8%;
+  right: 11%;
+}
+
+.stat-num {
+  font-size: clamp(2.3rem, 3.8vw, 3.5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+/* Active Highlight when car crosses milestone */
+.stat-card.active-checkpoint {
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7), 0 0 25px rgba(69, 219, 125, 0.35);
+}
+
+/* ========================================================
+   BOTTOM SCROLL INDICATOR
+   ======================================================== */
+.scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  z-index: 30;
+  opacity: 0;
+}
+
+.scroll-text {
+  font-size: 0.64rem;
+  letter-spacing: 0.35em;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scroll-pill-wrapper {
+  width: 20px;
+  height: 34px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  padding-top: 5px;
+}
+
+.scroll-pill-dot {
+  width: 4px;
+  height: 8px;
+  background-color: var(--green-glow);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--green-glow);
+  animation: scrollBob 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollBob {
+  0% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(12px); opacity: 0.2; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ========================================================
+   NEXT SECTION (SMOOTH TRANSITION RESUMPTION)
+   ======================================================== */
+.next-section {
+  position: relative;
+  min-height: 100vh;
+  background: #090a0d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.next-container {
+  max-width: 840px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.next-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  color: var(--green-glow);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.next-heading {
+  font-size: clamp(2.2rem, 5vw, 4.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+}
+
+.next-divider {
+  width: 50px;
+  height: 3px;
+  background: var(--green-glow);
+  margin-bottom: 2rem;
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(69, 219, 125, 0.5);
+}
+
+.next-body {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #9ca3af;
+  margin-bottom: 3.5rem;
+  max-width: 680px;
+}
+
+.next-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.next-stat-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.8rem 1.2rem;
+  text-align: left;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.next-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(69, 219, 125, 0.3);
+}
+
+.next-stat-num {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.next-stat-label {
+  font-size: 0.78rem;
+  color: #838896;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* ========================================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+   ======================================================== */
+@media (max-width: 1200px) {
+  .headline-container {
+    left: 180px;
+  }
+  .stat-card {
+    padding: 1.2rem 1.5rem;
+    min-width: 190px;
+    max-width: 230px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (max-width: 1024px) {
+  .nav-header {
+    padding: 1.5rem 2rem;
+  }
+  
+  .headline-container {
+    left: 140px;
+  }
+  
+  .stat-box1 { top: 7%; right: 4%; }
+  .stat-box3 { top: 22%; right: 4%; }
+  .stat-box4 { bottom: 22%; right: 4%; }
+  .stat-box2 { bottom: 7%; right: 4%; }
+  
+  .next-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-container {
+    height: 300vh;
+  }
+
+  .road-track {
+    height: 140px;
+  }
+
+  .nav-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .brand-pill {
+    display: none;
+  }
+
+  .scroll-indicator {
+    bottom: 1.2rem;
+  }
+
+  .headline-container {
+    left: 110px;
+  }
+
+  .headline-letter {
+    font-size: clamp(1.4rem, 5.5vw, 2.8rem);
+  }
+
+  .headline-space {
+    width: 0.5rem;
+  }
+
+  .car-wrapper {
+    left: -100px;
+    width: 240px;
+  }
+
+  .stat-card {
+    padding: 0.75rem 0.95rem;
+    min-width: 125px;
+    max-width: 150px;
+    border-radius: 9px;
+  }
+
+  .stat-num {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+  }
+
+  .stat-box1 { top: 7%; right: 4%; }
+  .stat-box3 { top: 22%; right: 4%; }
+  .stat-box4 { bottom: 22%; right: 4%; }
+  .stat-box2 { bottom: 7%; right: 4%; }
+}
+
+@media (max-width: 480px) {
+  .road-track {
+    height: 110px;
+  }
+
+  .nav-header {
+    padding: 0.8rem 1rem;
+  }
+
+  .brand-title {
+    font-size: 0.85rem;
+  }
+
+  .hud-progress {
+    min-width: 110px;
+  }
+
+  .hud-label {
+    font-size: 0.55rem;
+  }
+
+  .hud-value {
+    font-size: 0.85rem;
+  }
+
+  .headline-container {
+    left: 85px;
+  }
+
+  .headline-letter {
+    font-size: clamp(1.2rem, 5vw, 2.2rem);
+  }
+
+  .car-wrapper {
+    left: -80px;
+    width: 180px;
+  }
+
+  .stat-card {
+    padding: 0.55rem 0.7rem;
+    min-width: 110px;
+    max-width: 130px;
+  }
+
+  .stat-num {
+    font-size: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.58rem;
+  }
+
+  .stat-box1 { top: 8%; right: 3%; }
+  .stat-box3 { top: 23%; right: 3%; }
+  .stat-box4 { bottom: 23%; right: 3%; }
+  .stat-box2 { bottom: 8%; right: 3%; }
+
+  .scroll-indicator {
+    display: none; /* Keep clean on small mobile viewports */
+  }
+
+  .next-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION
+   ======================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-pill-dot {
+    animation: none;
+  }
+  
+  .nav-header,
+  .scroll-indicator,
+  .stat-card {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  
+  .headline-letter {
+    opacity: 1 !important;
+    color: #ffffff !important;
+  }
 }
